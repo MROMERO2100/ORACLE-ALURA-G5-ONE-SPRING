@@ -5,24 +5,36 @@ import com.clinic.api.domain.paciente.DatosRegistroPaciente;
 import com.clinic.api.domain.paciente.Paciente;
 import com.clinic.api.domain.paciente.PacienteRepository;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/pacientes")
 public class PacienteController {
-    @Autowired(required = false)
-    private PacienteRepository pacienteRepository;
+
+    private final PacienteRepository pacienteRepository;
+
+    public PacienteController(PacienteRepository pacienteRepository) {
+        this.pacienteRepository = pacienteRepository;
+    }
+
     @PostMapping
-    public void createPaciente(@RequestBody @Valid DatosRegistroPaciente datosRegistroPaciente){
+    public ResponseEntity<Void> createPaciente(@RequestBody @Valid DatosRegistroPaciente datosRegistroPaciente) {
         pacienteRepository.save(new Paciente(datosRegistroPaciente));
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping
-    public Page<DatosListadoPaciente> listPacientes(@PageableDefault(page = 0, size = 10, sort = {"nombre"}) Pageable paginacion) {
-        return pacienteRepository.findAll(paginacion).map(DatosListadoPaciente::new);
+    public ResponseEntity<Page<DatosListadoPaciente>> listPacientes(
+            @PageableDefault(size = 10, sort = "nombre") Pageable paginacion) {
+
+        Page<DatosListadoPaciente> pacientes = pacienteRepository
+                .findAll(paginacion)
+                .map(DatosListadoPaciente::new);
+
+        return ResponseEntity.ok(pacientes);
     }
 }
