@@ -7,22 +7,31 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.util.List;
+
 @RestControllerAdvice
 public class TratadorErrores {
 
     @ExceptionHandler(EntityNotFoundException.class)
-    public ResponseEntity Error404(){
+    public ResponseEntity<Void> handleNotFound() {
         return ResponseEntity.notFound().build();
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity Error400(MethodArgumentNotValidException e){
-        var errores = e.getFieldErrors().stream().map(DatosErrorValidacion::new).toList();
+    public ResponseEntity<List<DatosErrorValidacion>> handleValidationError(
+            MethodArgumentNotValidException exception) {
+
+        List<DatosErrorValidacion> errores = exception
+                .getFieldErrors()
+                .stream()
+                .map(DatosErrorValidacion::new)
+                .toList();
+
         return ResponseEntity.badRequest().body(errores);
     }
 
-    private record DatosErrorValidacion(String campo, String error){
-        public DatosErrorValidacion(FieldError error){
+    private record DatosErrorValidacion(String campo, String error) {
+        DatosErrorValidacion(FieldError error) {
             this(error.getField(), error.getDefaultMessage());
         }
     }
